@@ -18,6 +18,9 @@ using namespace std;
 void mostrarMenu();
 void abrirCuenta(bool &cuentaAbierta, string &nombreCliente, 
 string &generoCliente, int &edadCliente, double &saldoInicial, vector<string> &beneficiarios);
+
+void verSaldo(double &saldoPrincipal, double saldoCripto[], int &contadorConsultas, bool cuentaAbierta);
+
 void pausa();
 void limpiarPantalla();
 // Variables globales
@@ -31,6 +34,10 @@ int main() {
 
     // Vector para guardar los 3 beneficiarios
     vector<string> beneficiarios(3);
+
+    // Variables para la opción 3: Ver saldo
+    int contadorConsultas = 0;          // Contador de consultas realizadas (máx 8)
+    double saldoCripto[3] = {0.0, 0.0, 0.0}; // Vector de criptomonedas [0]=BTC, [1]=ETH, [2]=LTC
 
     // EDITAR OPCIONES DEL MENU PRINCIPAL (LA QUE SE ASIGNO A CADA QUIEN)
     // solo esta validado para cuenta creada, las demas opciones no estan programadas
@@ -60,13 +67,7 @@ int main() {
                 }
                 break;
             case 3:
-                if (cuentaAbierta) {
-                    cout << "\nOpcion 3: Ver saldo\n";
-                    // Lógica para ver saldo
-                } else {
-                    cout << "\nDebe aperturar una cuenta primero.\n";
-                    pausa();
-                }
+                verSaldo(saldoInicial, saldoCripto, contadorConsultas, cuentaAbierta);
                 break;
             case 4:
                 if (cuentaAbierta) {
@@ -189,4 +190,73 @@ void pausa() { // Función para pausar la ejecución del programa y esperar a qu
 // ===== FUNCION PARA LIMPIAR PANTALLA =====
 void limpiarPantalla() {
     system("cls"); // Si usas otro compilador diferente a Windows, puede ser system("clear");
+}
+
+// ===== OPCIÓN 3: VER SALDO  =====
+void verSaldo(double &saldoPrincipal, double saldoCripto[], int &contadorConsultas, bool cuentaAbierta) {
+
+    limpiarPantalla();
+
+    // Validar que la cuenta esté creada
+    if (cuentaAbierta == false) {
+        cout << "Debe aperturar una cuenta antes de consultar el saldo." << endl;
+        pausa();
+        return; // Regresar al menú principal
+    }
+
+    // Validar límite de 8 consultas
+    if (contadorConsultas >= 8) {
+        cout << "Ha alcanzado el limite de 8 consultas de saldo." << endl;
+        pausa();
+        return; // Regresar al menú principal
+    }
+
+    // Verificar que el cobro no deje la cuenta por debajo de L.100
+    if ((saldoPrincipal - 5) < 100) {
+        cout << "No se puede realizar la consulta. El cobro de L.5.00" << endl;
+        cout << "dejaria su saldo por debajo del minimo permitido (L.100.00)." << endl;
+        pausa();
+        return; // Regresar al menú principal
+    }
+
+    // Cobrar L.5.00 por consulta
+    saldoPrincipal = saldoPrincipal - 5;
+    cout << "Se ha cobrado L.5.00 por consulta de saldo." << endl;
+
+    // Incrementar contador de consultas
+    contadorConsultas = contadorConsultas + 1;
+
+    // Calcular consultas restantes
+    int consultasRestantes = 8 - contadorConsultas;
+
+    // Mostrar saldo principal
+    cout << fixed << setprecision(2); // Formatear salida a 2 decimales
+    cout << "\n============================================" << endl;
+    cout << "           CONSULTA DE SALDO" << endl;
+    cout << "============================================" << endl;
+    cout << "Saldo Principal: L." << saldoPrincipal << endl;
+
+    // Mostrar saldo de criptomonedas usando vector ---
+    cout << "--------------------------------------------" << endl;
+    cout << "       Saldo en Criptomonedas" << endl;
+    cout << "--------------------------------------------" << endl;
+
+    // Nombres de criptomonedas en un vector para recorrer con ciclo
+    string nombresCripto[3] = {"Bitcoin (BTC)", "Ethereum (ETH)", "Litte Coin (LTC)"};
+
+    for (int i = 0; i < 3; i++) {
+        cout << nombresCripto[i] << ": " << saldoCripto[i] << endl;
+    }
+
+    // Mostrar consultas realizadas y restantes ---
+    cout << "--------------------------------------------" << endl;
+    cout << "Consultas realizadas: " << contadorConsultas << " de 8" << endl;
+    cout << "Consultas restantes: " << consultasRestantes << endl;
+    cout << "============================================" << endl;
+
+    //  Pausa para que el usuario lea ---
+    pausa();
+
+    // Limpiar pantalla y regresar al menú principal ---
+    limpiarPantalla();
 }
