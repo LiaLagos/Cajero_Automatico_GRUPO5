@@ -2,261 +2,626 @@
 FACULTAD DE CIENCIAS ECONÓMICAS, ADMINISTRATIVAS Y CONTABLES
 DEPARTAMENTO DE INFORMÁTICA
 DIA 044 Programación Básica
-Proyecto: CAJERO AUTOMÁTICO
-Grupo N°5
+Proyecto II "FINANCIERA PUMA-Bank"
+IIPAC 2026
+Cindy Yaquelin Rodriguez Aguilar
+Ruth Aracely Castañeda Gonzales
+Aldo Misael Flores Amador
+Lia Samira Lagos Palacios 
 */
 
-#include<iostream>
-#include<string>
-#include<vector>
-#include<iomanip>
-#include<cstdlib>
+#include <iostream>
+#include <string>
+#include <iomanip>   // Librería para dar formato a la salida (limitar decimales)
+//#include <windows.h>// PARA CONFIGURAR EL IDIOMA ESPAÑOL
+#include <vector>    //MEJORAMOS EL PROGRAMA USANDO VECTORES
+#include <cctype>
+using namespace std; 
 
-using namespace std;
+/*================================
+VARIABLES Y VECTORES GLOBALES
+==================================*/
 
-// Funciones 
-void mostrarMenu();
-void abrirCuenta(bool &cuentaAbierta, string &nombreCliente, 
-string &generoCliente, int &edadCliente, double &saldoInicial, vector<string> &beneficiarios);
+//Varibles para la apertura de la cuenta
+string nombre;
+string apellido;
+char genero;
+int edad;
+double SaldoPrincipal;
+vector<string> beneficiarios;
+//variables para acreditar
+double saldo;
+int contadorAcreditaciones;
+int saldoLTC;
 
-void verSaldo(double &saldoPrincipal, double saldoCripto[], int &contadorConsultas, bool cuentaAbierta);
+//variables para ver saldo
+int contadorConsultas = 0;       // Máximo 8 consultas
+int saldoBTC;
+int saldoETH;
 
-void pausa();
-void limpiarPantalla();
-// Variables globales
-int main() {
-    bool cuentaAbierta = false;
-    string nombreCliente;
-    string generoCliente;
-    int edadCliente = 0;
-    double saldoInicial = 0.0;
+/*=====================================
+PROTOTIPOS DE FUNCIONES
+========================================
+*/
+
+//01
+bool esTextoValido(string texto);
+//02
+void aperturaCuenta (string &nombre, string &apellido, char &genero, int &edad,
+                     double &saldoPrincipal, vector<string> &beneficiarios
+                    );
+//03
+void mostrarDatosRegistro(const string &nombre, const string &apellido,
+                          int edad, char genero, double saldoPrincipal,
+                          const vector<string> &beneficiarios);
+//04
+void menuPrincipal() ;
+//05
+void acreditar(double &saldoPrincipal, int &contadorAcreditaciones, int &saldoLTC);
+//06
+int validarOpcionMenu ();
+//07
+void procesoMenu();
+//08
+void debitar(double &saldoPrincipal);
+//09
+void verSaldo(double &saldoPrincipal, int &contadorConsultas, int &saldoLTC, int &saldoBTC, int &saldoETH);
+
+/*========================================
+MAIN PRINCIPAL
+=========================================*/
+
+int main() { 
+     setlocale(LC_ALL, "es_ES.UTF-8");
     int opcion;
+    beneficiarios.resize(3);
+    //Regitsro del usuario
+    aperturaCuenta(nombre, apellido, genero, edad, SaldoPrincipal, beneficiarios);
+    //Estadistica del registro
+    mostrarDatosRegistro(nombre, apellido, edad, genero, SaldoPrincipal, beneficiarios);
+    //menuPrincipal
+    procesoMenu();
 
-    // Vector para guardar los 3 beneficiarios
-    vector<string> beneficiarios(3);
-
-    // Variables para la opción 3: Ver saldo
-    int contadorConsultas = 0;          // Contador de consultas realizadas (máx 8)
-    double saldoCripto[3] = {0.0, 0.0, 0.0}; // Vector de criptomonedas [0]=BTC, [1]=ETH, [2]=LTC
-
-    // EDITAR OPCIONES DEL MENU PRINCIPAL (LA QUE SE ASIGNO A CADA QUIEN)
-    // solo esta validado para cuenta creada, las demas opciones no estan programadas
-
-    do {
-        mostrarMenu();
-        cout << "Seleccione una opcion: ";
-        cin >> opcion;
-
-        switch(opcion) {
-            case 1:
-            if (cuentaAbierta) {
-                    cout << "\nOpcion 1: Acreditar\n";
-                    // Lógica para acreditar dinero
-                } else {
-                    cout << "\nDebe aperturar una cuenta primero.\n";
-                    pausa();
-                }
-                break;
-            case 2:
-                if (cuentaAbierta) {
-                    cout << "\nOpcion 2: Debitar\n";
-                    // Lógica para debitar dinero
-                } else {
-                    cout << "\nDebe aperturar una cuenta primero.\n";
-                    pausa();
-                }
-                break;
-            case 3:
-                verSaldo(saldoInicial, saldoCripto, contadorConsultas, cuentaAbierta);
-                break;
-            case 4:
-                if (cuentaAbierta) {
-                    cout << "\nOpcion 4: Transferencias de criptomonedas\n";
-                    // Lógica para transferencias de criptomonedas
-                } else {
-                    cout << "\nDebe aperturar una cuenta primero.\n";
-                    pausa();
-                }
-                break;
-            case 5:
-                if (cuentaAbierta) {
-                    cout << "\nLa cuenta ya fue aperturada.\n";
-                    pausa();
-                } else {
-                    abrirCuenta(cuentaAbierta, nombreCliente, generoCliente, edadCliente, saldoInicial, beneficiarios);
-                }
-                break;
-
-            case 6:
-                cout << "\nGracias por su preferencia.\n";
-                break;
-
-            default:
-                cout << "\nPor ahora solo esta programada la opcion 5 (Apertura de cuenta).\n";
-                pausa();
-        }
-
-    } while(opcion != 6);
 
     return 0;
 }
 
-// ===== MENU PRINCIPAL =====
-void mostrarMenu() {
-    limpiarPantalla();
-    cout << "=============================================\n";
-    cout << "======== | BIENVENIDO A PUMA-BANK | =========\n";
-    cout << "=============================================\n";
-    cout << "         CAJERO AUTOMATICO PUMA-BANK         \n";
-    cout << "=============================================\n";
-    cout << "1. Acreditar\n";
-    cout << "2. Debitar\n";
-    cout << "3. Ver saldo\n";
-    cout << "4. Transferencias de criptomonedas\n";
-    cout << "5. Apertura de cuenta\n";
-    cout << "6. Salir\n";
-    cout << "=============================================\n";
+
+/*========================================
+PROCESO DE FUNCIONES
+=======================================*/
+//01
+bool esTextoValido(string texto) {
+
+    if (texto.empty()) { //verifica que no este vacio
+        return false;
+    }
+    for (int i = 0; i < texto.length(); i++) {   //verificamos caracter por caracter
+        char c = texto[i];
+        if (!isalpha(c) && !isspace(c)) { //verificamos que cada caracter este estre a y z
+            return false;
+        }
+    }
+    return true;
 }
 
-// ===== APERTURA DE CUENTA + REGISTRO DE BENEFICIARIOS =====
-void abrirCuenta(bool &cuentaAbierta, string &nombreCliente, 
-string &generoCliente, int &edadCliente, double &saldoInicial, vector<string> &beneficiarios) 
-{
+//02
+void aperturaCuenta (string &nombre, string &apellido, char &genero, int &edad,
+                     double &saldoPrincipal, vector<string> &beneficiarios)
+{ 
+    string _nombre, _apellido;
+    char _genero;
+    int _edad = 0;
 
-    limpiarPantalla();
-    cout << "========= BIENVENIDO A PUMA-BANK =========\n";
-    cout << "========== APERTURA DE CUENTA ==========\n";
+    beneficiarios.resize(3);
 
-    // Solicitar nombre del cliente
-    cin.ignore(); // Limpiar el buffer de entrada
-    cout << "Ingrese su nombre: ";
-    getline(cin, nombreCliente);
+    cout << "\n---BIENVENIDO AL REGISTRO DE CLIENTE DE FINANCIERA PUMA-Bank ---" << endl;
+    cout << "==================================================================" << endl;
+    cout << "\n                 REGISTRO DE CLIENTE\n\n";
 
-    // validación de genero del cliente
+    //==============================
+    //Solicitar y validar el nombre
+    //==============================
+    do {
+        cout << "Ingrese su nombre: ";
+        getline(cin, _nombre);
+        if (!esTextoValido(_nombre)) {
+            cout << "[Error] El nombre no puede estar vacio ni contener numeros.\n\n";
+        }
+    } while (!esTextoValido(_nombre));
+
+    //==============================
+    //Solicitar y validar el apellido
+    //==============================
+    do {
+        cout << "Ingrese su apellido: ";
+        getline(cin, _apellido);
+        if (!esTextoValido(_apellido)) {
+            cout << "[Error] El apellido no puede estar vacio ni contener numeros.\n\n";
+        }
+    } while (!esTextoValido(_apellido));
+
+    //============================
+    //Solicitar y validar el genero
+    //============================
     do {
         cout << "Ingrese su genero (M/F): ";
-        getline(cin, generoCliente);
-    } while (generoCliente != "M" && generoCliente != "F");
+        cin >> _genero;
 
-    // validación de edad del cliente
+    if (cin.fail()) {
+        cin.clear();
+        cin.ignore(10000, '\n');
+        cout << "[Error] Entrada inválida. Debe ingresar M o F.\n";
+        _genero = 'X';
+    continue;
+    }
+        _genero = toupper(_genero);
+
+    if (_genero != 'M' && _genero != 'F') {
+        cout << "[Error] Solo se permiten 'M' o 'F'.\n";
+    }
+
+    cin.ignore(10000, '\n'); // Limpia el buffer para evitar problemas con getline
+
+    } while (_genero != 'M' && _genero != 'F');
+
+
+    //=========================
+    //Solicitar y validar la edad
+    //=========================
     do {
-        cout << "Ingrese su edad: ";
-        cin >> edadCliente;
-        if (edadCliente < 18 || edadCliente > 100) {
-            cout << "Edad no valida. Debe estar entre 18 y 100 años.\n";
-        }
-    } while (edadCliente < 18 || edadCliente > 100);
+    cout << "Ingrese su edad: ";
 
-    // Saldo inicial de apertura
-    saldoInicial = 200.00;
-    cuentaAbierta = true;
-
-    cout << "\nCuenta aperturada con exito.\n";
-    cout << "Saldo inicial: L. " << fixed << setprecision(2) << saldoInicial << "\n";
-
-    // Registro de beneficiarios
-    cin.ignore();
-    cout << "\nIngrese los 3 beneficiarios (Nombre del Beneficiario):\n"; // Se solicita el nombre de los beneficiarios
-    for (int i = 0; i < 3; i++) { // i es el índice del vector beneficiarios
-        cout << "Beneficiario " << (i + 1) << ": ";
-        getline(cin, beneficiarios[i]); // Se guarda el nombre del beneficiario en el vector
+    // Detecta si el usuario solo presiona ENTER
+    if (cin.peek() == '\n') {
+        cout << "[Error] El campo no puede quedar vacío.\n";
+        cin.ignore(10000, '\n');   // Limpia el ENTER
+        _edad = 0;
+        continue;
     }
 
-    cout << "\nBeneficiarios registrados correctamente.\n";
+    cin >> _edad;
 
-    // Mostrar resumen
-    cout << "\n========== RESUMEN DE LA CUENTA ==========\n";
-    cout << "Nombre: " << nombreCliente << "\n";
-    cout << "Genero: " << generoCliente << "\n";
-    cout << "Edad: " << edadCliente << "\n";
-    cout << "Saldo inicial: L. " << saldoInicial << "\n";
-
-    cout << "\nBeneficiarios registrados:\n";
-    for (int i = 0; i < 3; i++) { // Se recorre el vector beneficiarios para mostrar los nombres
-        cout << (i + 1) << ". " << beneficiarios[i] << "\n";
+    // Detecta letras o símbolos
+    if (cin.fail()) {
+        cout << "[Error] Entrada inválida. Debe ingresar solo números enteros.\n";
+        cin.clear();
+        cin.ignore(10000, '\n');
+        _edad = 0;
+        continue;
     }
 
-    pausa(); // Se llama a la función pausa para que el usuario pueda leer el resumen antes de volver al menú principal
-}
-
-// ===== FUNCION PARA PAUSAR =====
-void pausa() { // Función para pausar la ejecución del programa y esperar a que el usuario presione ENTER
-    cout << "\nPresione ENTER para volver al Menu Principal de | PUMA-BANK |";
-    cin.ignore();
-    cin.get(); // el cin.get() es un método para pausar la ejecución del programa hasta que el usuario presione la tecla ENTER. 
-    // Esto permite al usuario leer los mensajes en pantalla antes de continuar con el programa.
-}
-
-// ===== FUNCION PARA LIMPIAR PANTALLA =====
-void limpiarPantalla() {
-    system("cls"); // Si usas otro compilador diferente a Windows, puede ser system("clear");
-}
-
-// ===== OPCIÓN 3: VER SALDO  =====
-void verSaldo(double &saldoPrincipal, double saldoCripto[], int &contadorConsultas, bool cuentaAbierta) {
-
-    limpiarPantalla();
-
-    // Validar que la cuenta esté creada
-    if (cuentaAbierta == false) {
-        cout << "Debe aperturar una cuenta antes de consultar el saldo." << endl;
-        pausa();
-        return; // Regresar al menú principal
+    // Detecta rango inválido
+    if (_edad < 18 || _edad > 100) {
+        cout << "[Error] La edad debe estar entre 18 y 100 años.\n";
     }
 
-    // Validar límite de 8 consultas
-    if (contadorConsultas >= 8) {
-        cout << "Ha alcanzado el limite de 8 consultas de saldo." << endl;
-        pausa();
-        return; // Regresar al menú principal
+    cin.ignore(10000, '\n'); // Limpia buffer para evitar problemas con getline
+
+} while (_edad < 18 || _edad > 100);
+
+
+
+    //=========================
+    //Saldo principal
+    //=========================
+      cout << "\nIMPORTANTE---Para la apertura de la cuenta se requiere un mínimo de L.200\n";
+    do {
+   
+        cout << "Ingrese el saldo principal: ";
+
+    // Detectar si el usuario solo presiona ENTER
+    if (cin.peek() == '\n') {
+        cout << "[Error] El campo no puede quedar vacío.\n";
+        cin.ignore(10000, '\n');   // Limpia el ENTER
+        saldoPrincipal = 0;
+        continue;
     }
 
-    // Verificar que el cobro no deje la cuenta por debajo de L.100
-    if ((saldoPrincipal - 5) < 100) {
-        cout << "No se puede realizar la consulta. El cobro de L.5.00" << endl;
-        cout << "dejaria su saldo por debajo del minimo permitido (L.100.00)." << endl;
-        pausa();
-        return; // Regresar al menú principal
+    cin >> saldoPrincipal;
+
+    // Validar que el usuario no ingrese letras o símbolos
+    if (cin.fail()) {
+        cin.clear();                 // Limpia el estado de error
+        cin.ignore(10000, '\n');     // Limpia el buffer
+        cout << "[Error] Debe ingresar un número válido (puede incluir decimales).\n";
+        saldoPrincipal = 0;          // Fuerza a repetir el ciclo
+        continue;                    // Vuelve al inicio del do-while
     }
 
-    // Cobrar L.5.00 por consulta
-    saldoPrincipal = saldoPrincipal - 5;
-    cout << "Se ha cobrado L.5.00 por consulta de saldo." << endl;
+    // Validar que el saldo no sea menor a 200
+    if (saldoPrincipal < 200) {
+        cout << "[Error] El saldo principal no puede ser menor a L.200.\n";
+    } else {
+        cout << "Saldo válido: L." << fixed << setprecision(2) << saldoPrincipal << "\n";
+    }
 
-    // Incrementar contador de consultas
-    contadorConsultas = contadorConsultas + 1;
+    cin.ignore(10000, '\n'); // Limpia buffer para evitar problemas con getline
 
-    // Calcular consultas restantes
-    int consultasRestantes = 8 - contadorConsultas;
+    } while (saldoPrincipal < 200);
 
-    // Mostrar saldo principal
-    cout << fixed << setprecision(2); // Formatear salida a 2 decimales
-    cout << "\n============================================" << endl;
-    cout << "           CONSULTA DE SALDO" << endl;
-    cout << "============================================" << endl;
-    cout << "Saldo Principal: L." << saldoPrincipal << endl;
-
-    // Mostrar saldo de criptomonedas usando vector ---
-    cout << "--------------------------------------------" << endl;
-    cout << "       Saldo en Criptomonedas" << endl;
-    cout << "--------------------------------------------" << endl;
-
-    // Nombres de criptomonedas en un vector para recorrer con ciclo
-    string nombresCripto[3] = {"Bitcoin (BTC)", "Ethereum (ETH)", "Litte Coin (LTC)"};
+    //=========================
+    //Beneficiarios
+    //=========================
+    cout << "\nIngrese los 3 beneficiarios (Nombre del Beneficiario):\n";
 
     for (int i = 0; i < 3; i++) {
-        cout << nombresCripto[i] << ": " << saldoCripto[i] << endl;
+        string nombreBenef;
+
+        do {
+            cout << "Beneficiario " << (i + 1) << ": ";
+            getline(cin, nombreBenef);
+
+            if (!esTextoValido(nombreBenef)) {
+                cout << "[Error] El nombre del beneficiario debe contener solo letras y espacios.\n";
+            }
+
+        } while (!esTextoValido(nombreBenef));
+
+        beneficiarios[i] = nombreBenef;
     }
 
-    // Mostrar consultas realizadas y restantes ---
-    cout << "--------------------------------------------" << endl;
-    cout << "Consultas realizadas: " << contadorConsultas << " de 8" << endl;
-    cout << "Consultas restantes: " << consultasRestantes << endl;
-    cout << "============================================" << endl;
 
-    //  Pausa para que el usuario lea ---
-    pausa();
-
-    // Limpiar pantalla y regresar al menú principal ---
-    limpiarPantalla();
+    //=========================
+    //Asignar valores finales
+    //=========================
+    nombre = _nombre;
+    apellido = _apellido;
+    genero = _genero;
+    edad = _edad;
 }
+
+//03
+void mostrarDatosRegistro(const string &nombre, const string &apellido,
+                          int edad, char genero, double saldoPrincipal,
+                          const vector<string> &beneficiarios){
+    cout << "\nRegistro Completado con éxito en FINANCIERA PUMA-BANK!" << endl;
+    system("pause");
+    system("cls");
+
+     string generoTexto;
+    if (genero == 'M') {
+        generoTexto = "Masculino";
+    } else {
+        generoTexto = "Femenino";
+    }
+
+    cout << "\n==================================================\n";
+    cout << "     CLIENTE REGISTRADO CON ÉXITO EN EL SISTEMA!\n";
+    cout << "==================================================\n";
+    cout << "  * Nombre completo : " << nombre << " " << apellido << "\n";
+    cout << "  * Edad            : " << edad << " años\n";
+    cout << "  * Género          : " << generoTexto << "\n";
+
+    cout << "  * Saldo Inicial   : L." 
+         << fixed << setprecision(2) << saldoPrincipal << "\n";
+
+    cout << "--------------------------------------------------\n";
+    cout << "  BENEFICIARIOS REGISTRADOS:\n";
+
+    for (int i = 0; i < beneficiarios.size(); i++) {
+        cout << "  -> " << beneficiarios[i] << "\n";
+    }
+
+    cout << "==================================================\n\n";
+    system ("pause");
+ }
+
+ //04
+void menuPrincipal()
+{
+    
+        system("cls");
+        cout << "==============================\n";
+        cout << "        CAJERO VIRTUAL        \n";
+        cout << "==============================\n";
+        cout << "1) Acreditar\n";
+        cout << "2) Debitar\n";
+        cout << "3) Ver saldo\n";
+        cout << "4) Transferencias de criptomonedas\n";
+        cout << "5) Salir\n";
+        cout << "==============================\n";
+
+       
+}
+
+//05
+void acreditar(double &saldoPrincipal, int &contadorAcreditaciones, int &saldoLTC)
+{
+    double monto = 0;
+
+    cout << "-----------------------------------" << endl;
+    cout << "            ACREDITACION           " << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "------ FINANCIERA   PUMA-BANK -----" << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "\nBienvenido al sistema de acreditacion de PUMA-BANK!" << endl;
+    cout << "Por cada 2 acreditaciones válidas, usted obtiene 1 Litte Coin.\n" << endl;
+    cout << "Saldo Actual: L." << fixed << setprecision(2) << saldoPrincipal << endl;
+    // Solicitar monto
+    do {
+        cout << "Ingrese la cantidad en L. que desea acreditar (mínimo L.100): ";
+
+        if (cin.peek() == '\n') {
+            cout << "[ERROR] El campo no puede quedar vacío.\n";
+            cin.ignore(10000, '\n');
+            continue;
+        }
+
+        cin >> monto;
+
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(10000, '\n');
+            cout << "[ERROR] Debe ingresar un número válido.\n";
+            monto = 0;
+            continue;
+        }
+
+        if (monto < 100) {
+            cout << "[ERROR] El monto mínimo para acreditar es L.100.\n";
+            continue;
+        }
+
+        cin.ignore(10000, '\n');
+
+    } while (monto < 100);
+    system ("cls");
+    // Acreditación válida
+    saldoPrincipal += monto;
+    cout << "-----------------------------------" << endl;
+    cout << "            ACREDITACION           " << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "------ FINANCIERA   PUMA-BANK -----" << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "Listo, usted ha acreditado: L." << monto << " a su cuenta.\n";
+    cout << "Su cuenta ahora tiene: L." 
+         << fixed << setprecision(2) << saldoPrincipal << endl;
+
+    contadorAcreditaciones++;
+
+    if (contadorAcreditaciones == 2)
+    {
+        saldoLTC += 1;
+        contadorAcreditaciones = 0;
+
+        cout << "\n¡Felicidades! Usted ha ganado 1 Litte Coin (LTC)!" << endl;
+        cout << "LTC acumulados: " << saldoLTC << " LTC\n";
+    }
+
+}
+
+//06
+int validarOpcionMenu() {
+    string entrada;
+    int opcion;
+
+    while (true) {
+        cout << "Ingrese una opcion (1-5): ";
+        getline(cin, entrada);
+
+        // Detectar ENTER vacío
+        if (entrada.empty()) {
+            cout << "\n[ERROR] El campo no puede quedar vacio.\n";
+            continue;
+        }
+
+        // Detectar si NO es número
+        bool esNumero = true;
+        for (char c : entrada) {
+            if (!isdigit(c)) {
+                esNumero = false;
+                break;
+            }
+        }
+
+        if (!esNumero) {
+            cout << "\n[ERROR] Debe ingresar solo numeros.\n";
+            continue;
+        }
+
+        // Convertir a entero
+        opcion = stoi(entrada);
+
+        // Validar rango
+        if (opcion < 1 || opcion > 5) {
+            cout << "\n[ERROR] La opcion debe estar entre 1 y 5.\n";
+            continue;
+        }
+
+        return opcion; // ← Opción válida
+    }
+}
+
+//07
+void procesoMenu(){
+    int opcion = 0;
+
+    do {
+        menuPrincipal();
+         // Validación de opción
+       opcion = validarOpcionMenu();
+
+
+        switch (opcion)
+        {
+            case 1:
+                system("cls");
+                // ACREDITAR
+                acreditar(SaldoPrincipal, contadorAcreditaciones, saldoLTC);
+                cout << "\n>>> PARA VOLVER AL MENÚ PRINCIPAL: ";
+                system ("pause");
+                break;
+
+            case 2:
+                system("cls");
+                debitar (SaldoPrincipal);
+                cout << "\n>>> PARA VOLVER AL MENÚ PRINCIPAL: ";
+                system ("pause");
+                break;
+
+            case 3:
+                // VER SALDO
+
+                system("cls");
+                verSaldo(SaldoPrincipal, contadorConsultas, saldoLTC, saldoBTC, saldoETH);
+                cout << "\n>>> PARA VOLVER AL MENÚ PRINCIPAL: ";
+                system ("pause");
+                break;
+
+            case 4:
+                // TRANSFERENCIAS (te la puedo crear si querés)
+                cout << "\n>>> Función TRANSFERENCIAS aún no implementada.\n";
+                system("pause");
+                break;
+
+            case 5:
+                cout << "\nGracias por usar FINANCIERA PUMA‑Bank.\n";
+                system("pause");
+                break;
+
+            default:
+                cout << "\n[ERROR] Opción inválida.\n";
+                system("pause");
+                break;
+        }
+
+    } while (opcion != 5);
+}
+
+//08
+void debitar(double &saldoPrincipal)
+{
+    double monto = 0;
+    double comision = 0;
+    double saldoFinal = 0;
+
+    cout << "-----------------------------------" << endl;
+    cout << "               DEBITAR             " << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "------ FINANCIERA   PUMA-BANK -----" << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "\nBienvenido al sistema de débitos de PUMA-BANK!" << endl;
+    cout << "Por cada retiro se aplica una comisión según el monto.\n" << endl;
+    cout << "Saldo Actual: L." << fixed << setprecision(2) << saldoPrincipal << endl;
+    // Solicitar monto
+    do {
+        cout << "Ingrese la cantidad en L. que desea retirar: ";
+
+        // Detectar ENTER vacío
+        if (cin.peek() == '\n') {
+            cout << "[ERROR] El campo no puede quedar vacío.\n";
+            cin.ignore(10000, '\n');
+            continue;
+        }
+
+        cin >> monto;
+        system("cls");
+
+        // Validación de número
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(10000, '\n');
+            cout << "[ERROR] Debe ingresar solo números. No se permiten letras ni símbolos.\n";
+            monto = 0;
+            continue;
+        }
+
+        // Validación de monto positivo
+        if (monto <= 0) {
+            cout << "[ERROR] El monto debe ser mayor a 0.\n";
+            continue;
+        }
+
+        cin.ignore(10000, '\n'); // Limpia buffer
+
+    } while (monto <= 0);
+
+    // Calcular comisión
+    if (monto >= 100 && monto <= 1000) {
+        comision = 10.00;
+    } 
+    else if (monto > 1000) {
+        comision = monto * 0.08;  // 8%
+    } 
+    else {
+        comision = 0; // Retiros menores a 100 no tienen comisión
+    }
+
+    // Calcular saldo final
+    saldoFinal = saldoPrincipal - monto - comision;
+
+    // Validar saldo mínimo del proyecto
+    if (saldoFinal < 100) {
+        cout << "\n[ERROR] No se puede realizar el retiro." << endl;
+        cout << "Lo menos que puede tener en la cuenta son L.100.00." << endl;
+        cout << "Saldo actual: L." << fixed << setprecision(2) << saldoPrincipal << endl;
+        return;
+    }
+
+    // Retiro válido
+    saldoPrincipal = saldoFinal;
+    system ("cls");
+    cout << "-----------------------------------" << endl;
+    cout << "               DEBITAR             " << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "------ FINANCIERA   PUMA-BANK -----" << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "Retiro realizado con éxito." << endl;
+    cout << "Monto retirado: L." << fixed << setprecision(2) << monto << endl;
+    cout << "Comisión aplicada: L." << fixed << setprecision(2) << comision << endl;
+    cout << "Saldo final: L." << fixed << setprecision(2) << saldoPrincipal << endl;
+    cout << "-----------------------------------" << endl;
+}
+
+// 09 VER SALDO
+void verSaldo(double &saldoPrincipal, int &contadorConsultas, int &saldoLTC, int &saldoBTC, int &saldoETH) {
+  
+      // Validar límite de 8 consultas
+      if (contadorConsultas >= 8) {
+          cout << "Ha alcanzado el limite de 8 consultas de saldo." << endl;
+          return;
+      }
+
+      // Verificar que el cobro no deje la cuenta por debajo de L.100 
+      if ((saldoPrincipal - 5) < 100) {
+          cout << "No se puede realizar la consulta. El cobro de L.5.00" << endl;
+          cout << "dejaria su saldo por debajo del minimo permitido (L.100.00)." << endl;
+          return;
+      }
+  
+      // Cobrar L.5.00 por consulta
+      saldoPrincipal = saldoPrincipal - 5;
+      cout << "Se ha cobrado L.5.00 por consulta de saldo." << endl;
+  
+      // Incrementar contador de consultas
+      contadorConsultas = contadorConsultas + 1;
+  
+      // Calcular consultas restantes
+      int consultasRestantes = 8 - contadorConsultas;
+
+      // Mostrar saldo principal 
+      cout << fixed << setprecision(2); // Formatear salida a 2 decimales
+      cout << "\n============================================" << endl;
+      cout << "           CONSULTA DE SALDO" << endl;
+      cout << "============================================" << endl;
+      cout << "Saldo Principal: L." << saldoPrincipal << endl;
+  
+      // Mostrar saldo de criptomonedas
+      cout << "--------------------------------------------" << endl;
+      cout << "       Saldo en Criptomonedas" << endl;
+      cout << "--------------------------------------------" << endl;
+
+      string nombresCripto[3] = {"Bitcoin (BTC)", "Ethereum (ETH)", "Litte Coin (LTC)"};
+      int valoresCripto[3] = {saldoBTC, saldoETH, saldoLTC};
+  
+      for (int i = 0; i < 3; i++) {
+          cout << nombresCripto[i] << ": " << valoresCripto[i] << endl;
+      }
+  
+      // Mostrar consultas realizadas y restantes
+      cout << "--------------------------------------------" << endl;
+      cout << "Consultas realizadas: " << contadorConsultas << " de 8" << endl;
+      cout << "Consultas restantes: " << consultasRestantes << endl;
+      cout << "============================================" << endl;
+  }
