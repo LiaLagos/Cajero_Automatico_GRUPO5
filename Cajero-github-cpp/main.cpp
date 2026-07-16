@@ -29,6 +29,7 @@ char genero;
 int edad;
 double SaldoPrincipal;
 vector<string> beneficiarios;
+
 //variables para acreditar
 double saldo;
 int contadorAcreditaciones;
@@ -63,13 +64,13 @@ void mostrarDatosRegistro(const string &nombre, const string &apellido,
 //04
 void menuPrincipal() ;
 //05
-
+void acreditar(double &saldoPrincipal, int &contadorAcreditaciones, int &saldoLTC);
 //06
 int validarOpcionMenu ();
 //07
 void procesoMenu();
 //08
-
+void debitar(double &saldoPrincipal);
 //09
 
 //10  (Integrante 4)
@@ -343,11 +344,70 @@ void menuPrincipal()
 //05
 // INTEGRANTE 2 (CINDY): AQUI SISTEMA DE ACREDITACION
 
+void acreditar(double &saldoPrincipal, int &contadorAcreditaciones, int &saldoLTC)
+{
+    double monto = 0;
 
+    cout << "-----------------------------------" << endl;
+    cout << "            ACREDITACION           " << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "------ FINANCIERA   PUMA-BANK -----" << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "\nBienvenido al sistema de acreditacion de PUMA-BANK!" << endl;
+    cout << "Por cada 2 acreditaciones válidas, usted obtiene 1 Litte Coin.\n" << endl;
+    cout << "Saldo Actual: L." << fixed << setprecision(2) << saldoPrincipal << endl;
+    // Solicitar monto
+    do {
+        cout << "Ingrese la cantidad en L. que desea acreditar (mínimo L.100): ";
 
+        if (cin.peek() == '\n') {
+            cout << "[ERROR] El campo no puede quedar vacío.\n";
+            cin.ignore(10000, '\n');
+            continue;
+        }
 
+        cin >> monto;
 
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(10000, '\n');
+            cout << "[ERROR] Debe ingresar un número válido.\n";
+            monto = 0;
+            continue;
+        }
 
+        if (monto < 100) {
+            cout << "[ERROR] El monto mínimo para acreditar es L.100.\n";
+            continue;
+        }
+
+        cin.ignore(10000, '\n');
+
+    } while (monto < 100);
+    system ("cls");
+    // Acreditación válida
+    saldoPrincipal += monto;
+    cout << "-----------------------------------" << endl;
+    cout << "            ACREDITACION           " << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "------ FINANCIERA   PUMA-BANK -----" << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "Listo, usted ha acreditado: L." << monto << " a su cuenta.\n";
+    cout << "Su cuenta ahora tiene: L." 
+         << fixed << setprecision(2) << saldoPrincipal << endl;
+
+    contadorAcreditaciones++;
+
+    if (contadorAcreditaciones == 2)
+    {
+        saldoLTC += 1;
+        contadorAcreditaciones = 0;
+
+        cout << "\n¡Felicidades! Usted ha ganado 1 Litte Coin (LTC)!" << endl;
+        cout << "LTC acumulados: " << saldoLTC << " LTC\n";
+    }
+
+}
 //06
 int validarOpcionMenu() {
     string entrada;
@@ -406,7 +466,7 @@ void procesoMenu(){
             case 1:
                 system("cls");
                 // ACREDITAR
-                
+                acreditar(SaldoPrincipal, contadorAcreditaciones, saldoLTC);
                 cout << "\n>>> PARA VOLVER AL MENÚ PRINCIPAL: ";
                 system ("pause");
                 break;
@@ -414,7 +474,7 @@ void procesoMenu(){
             case 2:
                 system("cls");
                 // DEBITAR
-            
+                debitar (SaldoPrincipal);
                 cout << "\n>>> PARA VOLVER AL MENÚ PRINCIPAL: ";
                 system ("pause");
                 break;
@@ -450,12 +510,89 @@ void procesoMenu(){
 //08
 // INTEGRANTE 2 (CINDY): AQUI SISTEMA DE DEBITAR
 
+void debitar(double &saldoPrincipal)
+{
+    double monto = 0;
+    double comision = 0;
+    double saldoFinal = 0;
 
+    cout << "-----------------------------------" << endl;
+    cout << "               DEBITAR             " << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "------ FINANCIERA   PUMA-BANK -----" << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "\nBienvenido al sistema de débitos de PUMA-BANK!" << endl;
+    cout << "Por cada retiro se aplica una comisión según el monto.\n" << endl;
+    cout << "Saldo Actual: L." << fixed << setprecision(2) << saldoPrincipal << endl;
+    // Solicitar monto
+    do {
+        cout << "Ingrese la cantidad en L. que desea retirar: ";
 
+        // Detectar ENTER vacío
+        if (cin.peek() == '\n') {
+            cout << "[ERROR] El campo no puede quedar vacío.\n";
+            cin.ignore(10000, '\n');
+            continue;
+        }
 
+        cin >> monto;
+        system("cls");
 
+        // Validación de número
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(10000, '\n');
+            cout << "[ERROR] Debe ingresar solo números. No se permiten letras ni símbolos.\n";
+            monto = 0;
+            continue;
+        }
 
+        // Validación de monto positivo
+        if (monto <= 0) {
+            cout << "[ERROR] El monto debe ser mayor a 0.\n";
+            continue;
+        }
 
+        cin.ignore(10000, '\n'); // Limpia buffer
+
+    } while (monto <= 0);
+
+    // Calcular comisión
+    if (monto >= 100 && monto <= 1000) {
+        comision = 10.00;
+    } 
+    else if (monto > 1000) {
+        comision = monto * 0.08;  // 8%
+    } 
+    else {
+        comision = 0; // Retiros menores a 100 no tienen comisión
+    }
+
+    // Calcular saldo final
+    saldoFinal = saldoPrincipal - monto - comision;
+
+    // Validar saldo mínimo del proyecto
+    if (saldoFinal < 100) {
+        cout << "\n[ERROR] No se puede realizar el retiro." << endl;
+        cout << "Lo menos que puede tener en la cuenta son L.100.00." << endl;
+        cout << "Saldo actual: L." << fixed << setprecision(2) << saldoPrincipal << endl;
+        return;
+    }
+
+    // Retiro válido
+    saldoPrincipal = saldoFinal;
+    system ("cls");
+    cout << "-----------------------------------" << endl;
+    cout << "               DEBITAR             " << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "------ FINANCIERA   PUMA-BANK -----" << endl;
+    cout << "-----------------------------------" << endl;
+    cout << "Retiro realizado con éxito." << endl;
+    cout << "Monto retirado: L." << fixed << setprecision(2) << monto << endl;
+    cout << "Comisión aplicada: L." << fixed << setprecision(2) << comision << endl;
+    cout << "Saldo final: L." << fixed << setprecision(2) << saldoPrincipal << endl;
+    cout << "-----------------------------------" << endl;
+}
 // 09 VER SALDO
 // INTEGRANTE 3 (RUTH): AQUI SISTEMA DE SALDO
 
